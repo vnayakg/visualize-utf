@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Byte by Byte: UTF Encoding Visualizer | UTF-8 vs UTF-16</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Interactive tool to visualize how text is encoded in UTF-8 and UTF-16. See byte-by-byte breakdown, compare encoding sizes, and understand Unicode code points for any character including emoji.">
+  <meta name="keywords" content="UTF-8, UTF-16, Unicode, encoding, visualizer, byte, text encoding, character encoding, emoji encoding, code point, BMP, surrogate pair">
+  <meta name="author" content="UTF Encoding Visualizer">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Byte by Byte: UTF Encoding Visualizer">
+  <meta property="og:description" content="Interactive tool to visualize UTF-8 vs UTF-16 encoding. See how text transforms into bytes, compare sizes, and understand Unicode.">
+  <meta property="og:site_name" content="UTF Encoding Visualizer">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Byte by Byte: UTF Encoding Visualizer">
+  <meta name="twitter:description" content="Interactive tool to visualize UTF-8 vs UTF-16 encoding. See how text transforms into bytes, compare sizes, and understand Unicode.">
+
+  <!-- Additional SEO -->
+  <meta name="theme-color" content="#1e40af">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔤</text></svg>">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Byte by Byte: UTF Encoding Visualizer",
+    "description": "Interactive tool to visualize how text is encoded in UTF-8 and UTF-16. Compare encoding sizes and understand Unicode code points.",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "UTF-8 byte visualization",
+      "UTF-16 byte visualization",
+      "Unicode code point display",
+      "Encoding size comparison",
+      "Copy byte sequences",
+      "Mobile responsive"
+    ]
+  }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      min-height: 100vh;
+      background-color: #ffffff;
+      color: #111827;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 72rem;
+      margin: 0 auto;
+    }
+
+    /* Skip link for accessibility */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      padding: 0.5rem 1rem;
+      background-color: #1f2937;
+      color: #ffffff;
+      text-decoration: none;
+      z-index: 1000;
+      transition: top 0.2s;
+      border-radius: 0 0 0.25rem 0;
+    }
+
+    .skip-link:focus {
+      top: 0;
+    }
+
+    /* Screen reader only */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Focus visible states */
+    *:focus {
+      outline: none;
+    }
+
+    *:focus-visible {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #111827;
+    }
+
+    .header p {
+      color: #374151;
+    }
+
+    /* Card */
+    .card {
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Color-coded encoding sections */
+    .card-utf8 {
+      background-color: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .card-utf8 .section-title {
+      color: #1e40af;
+    }
+
+    .card-utf16 {
+      background-color: #faf5ff;
+      border-color: #e9d5ff;
+    }
+
+    .card-utf16 .section-title {
+      color: #7c3aed;
+    }
+
+    /* Input Section */
+    .input-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #374151;
+    }
+
+    .text-input {
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      color: #111827;
+      font-size: 1.125rem;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+      resize: vertical;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Character limit warning */
+    .char-limit-warning {
+      background-color: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 0.375rem;
+      padding: 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+      color: #92400e;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .char-limit-warning.visible {
+      display: flex;
+    }
+
+    .char-limit-warning svg {
+      flex-shrink: 0;
+    }
+
+    /* Example Buttons */
+    .example-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      padding-bottom: 0.5rem;
+    }
+
+    .example-buttons::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .example-buttons::-webkit-scrollbar-track {
+      background: #e5e7eb;
+      border-radius: 2px;
+    }
+
+    .example-buttons::-webkit-scrollbar-thumb {
+      background: #9ca3af;
+      border-radius: 2px;
+    }
+
+    .example-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      background-color: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 9999px;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .example-btn:hover {
+      background-color: #f3f4f6;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+    }
+
+    .example-btn:active {
+      transform: translateY(0);
+    }
+
+    .example-btn-icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    /* Encoding Rules Section */
+    .encoding-rules {
+      cursor: default;
+    }
+
+    .rules-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      list-style: none;
+      padding: 1rem 1.5rem;
+      margin: -1.5rem;
+      margin-bottom: 0;
+    }
+
+    .rules-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .encoding-rules[open] .rules-summary {
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+    }
+
+    .rules-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #374151;
+    }
+
+    .rules-toggle .chevron {
+      transition: transform 0.2s ease;
+    }
+
+    .encoding-rules[open] .rules-toggle .chevron {
+      transform: rotate(180deg);
+    }
+
+    .rules-content {
+      padding-top: 0.5rem;
+    }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .rules-column-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .rule-item {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.5rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .rule-range {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: #4b5563;
+      font-size: 0.75rem;
+      min-width: 140px;
+    }
+
+    .rule-pattern {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.6875rem;
+      white-space: nowrap;
+    }
+
+    .rule-desc {
+      color: #374151;
+      margin-left: auto;
+    }
+
+    .byte-1-bg { background-color: #1e3a8a; color: #fff; }
+    .byte-2-bg { background-color: #1e40af; color: #fff; }
+    .byte-3-bg { background-color: #3b82f6; color: #fff; }
+    .byte-4-bg { background-color: #93c5fd; color: #1e3a8a; }
+    .byte-2-purple-bg { background-color: #7c3aed; color: #fff; }
+    .byte-4-purple-bg { background-color: #c4b5fd; color: #4c1d95; }
+
+    /* Tooltips */
+    .tooltip {
+      position: relative;
+      cursor: help;
+      border-bottom: 1px dotted #6b7280;
+    }
+
+    .tooltip-indicator {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 0.875rem;
+      height: 0.875rem;
+      background-color: #e5e7eb;
+      border-radius: 50%;
+      font-size: 0.625rem;
+      font-weight: 600;
+      margin-left: 0.125rem;
+      vertical-align: middle;
+      color: #4b5563;
+    }
+
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.5rem 0.75rem;
+      background-color: #1f2937;
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 400;
+      border-radius: 0.375rem;
+      white-space: normal;
+      width: max-content;
+      max-width: 220px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s, visibility 0.15s;
+      z-index: 100;
+      text-align: left;
+      line-height: 1.4;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .tooltip:hover::after,
+    .tooltip:focus::after {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Size Comparison */
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #111827;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-box {
+      background-color: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      text-align: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .stat-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-box-highlight {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-color: #f59e0b;
+    }
+
+    .stat-box-highlight .stat-value {
+      color: #92400e;
+    }
+
+    .stat-box-highlight .stat-label {
+      color: #b45309;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: #374151;
+    }
+
+    .ratio-indicator {
+      font-size: 0.625rem;
+      margin-top: 0.25rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      display: inline-block;
+    }
+
+    .ratio-larger {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+
+    .ratio-smaller {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+
+    .ratio-same {
+      background-color: #e5e7eb;
+      color: #374151;
+    }
+
+    /* Character Breakdown */
+    .char-breakdown {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .breakdown-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.75rem;
+    }
+
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .breakdown-subtitle {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .breakdown-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .breakdown-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.5rem;
+      background-color: #f3f4f6;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+    }
+
+    .breakdown-count {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .breakdown-label {
+      color: #4b5563;
+    }
+
+    .breakdown-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+    }
+
+    .breakdown-dot.dot-1 { background-color: #1e3a8a; }
+    .breakdown-dot.dot-2 { background-color: #1e40af; }
+    .breakdown-dot.dot-3 { background-color: #3b82f6; }
+    .breakdown-dot.dot-4 { background-color: #93c5fd; }
+    .breakdown-dot.dot-2-purple { background-color: #7c3aed; }
+    .breakdown-dot.dot-4-purple { background-color: #c4b5fd; }
+
+    /* Visual Bars */
+    .bars-container {
+      margin-top: 1.5rem;
+    }
+
+    .bar-section {
+      margin-bottom: 0.5rem;
+    }
+
+    .bar-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .bar-label {
+      color: #374151;
+      font-weight: 500;
+    }
+
+    .bar-bytes {
+      color: #4b5563;
+    }
+
+    .bar-bg {
+      height: 2rem;
+      background-color: #e5e7eb;
+      border-radius: 0.25rem;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 0.5rem;
+      transition: width 0.5s ease;
+    }
+
+    .bar-fill-utf8 {
+      background: linear-gradient(90deg, #1e40af, #3b82f6);
+    }
+
+    .bar-fill-utf16 {
+      background: linear-gradient(90deg, #7c3aed, #a855f7);
+    }
+
+    .bar-percent {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Encoding Section Header */
+    .encoding-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .legend {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    /* UTF-8 legend colors */
+    .card-utf8 .legend-1byte { background-color: #1e3a8a; }
+    .card-utf8 .legend-2byte { background-color: #1e40af; }
+    .card-utf8 .legend-3byte { background-color: #3b82f6; }
+    .card-utf8 .legend-4byte { background-color: #93c5fd; color: #1e3a8a; }
+
+    /* UTF-16 legend colors */
+    .card-utf16 .legend-2byte { background-color: #7c3aed; }
+    .card-utf16 .legend-4byte { background-color: #c4b5fd; color: #4c1d95; }
+
+    /* Character Row */
+    .char-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .char-row {
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      transition: border-color 0.15s;
+    }
+
+    .char-row:hover {
+      border-color: #9ca3af;
+    }
+
+    .char-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .char-display {
+      width: 4.5rem;
+      text-align: center;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .char-glyph {
+      font-size: 1.875rem;
+      line-height: 1.2;
+    }
+
+    .char-codepoint {
+      font-size: 0.625rem;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: #6b7280;
+      margin-top: 0.125rem;
+    }
+
+    .char-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .byte-boxes-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .byte-boxes {
+      display: flex;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+    }
+
+    .byte-box {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+      color: #ffffff;
+      transition: opacity 0.15s;
+    }
+
+    .byte-box:hover {
+      opacity: 0.8;
+    }
+
+    /* UTF-8 byte colors */
+    .card-utf8 .byte-1 { background-color: #1e3a8a; }
+    .card-utf8 .byte-2 { background-color: #1e40af; }
+    .card-utf8 .byte-3 { background-color: #3b82f6; }
+    .card-utf8 .byte-4 { background-color: #93c5fd; color: #1e3a8a; }
+
+    /* UTF-16 byte colors */
+    .card-utf16 .byte-2 { background-color: #7c3aed; }
+    .card-utf16 .byte-4 { background-color: #c4b5fd; color: #4c1d95; }
+
+    /* Copy button */
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.25rem;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      color: #9ca3af;
+      transition: all 0.15s;
+      opacity: 0;
+    }
+
+    .char-row:hover .copy-btn,
+    .copy-btn:focus {
+      opacity: 1;
+    }
+
+    .copy-btn:hover {
+      background-color: #f3f4f6;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+
+    .copy-btn.copied {
+      color: #10b981;
+    }
+
+    .copy-btn svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .byte-details {
+      font-size: 0.75rem;
+      color: #4b5563;
+      margin-top: 0.25rem;
+      word-break: break-all;
+    }
+
+    /* Info Box */
+    .info-box {
+      background-color: #f9fafb;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+    }
+
+    .info-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .info-icon {
+      flex-shrink: 0;
+      margin-top: 0.25rem;
+      color: #374151;
+    }
+
+    .info-title {
+      font-weight: 600;
+      font-size: 1.125rem;
+      margin-bottom: 0.5rem;
+      color: #111827;
+    }
+
+    .info-list {
+      list-style: none;
+    }
+
+    .info-list li {
+      font-size: 0.875rem;
+      color: #374151;
+      margin-bottom: 0.5rem;
+    }
+
+    .info-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-list strong {
+      font-weight: 600;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .breakdown-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 1rem;
+      }
+
+      .card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .header {
+        margin-bottom: 1.5rem;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .section-title {
+        font-size: 1rem;
+      }
+
+      .text-input {
+        padding: 0.75rem;
+        font-size: 1rem;
+      }
+
+      .example-buttons {
+        flex-wrap: nowrap;
+      }
+
+      .example-btn {
+        min-height: 44px;
+        padding: 0.625rem 1rem;
+      }
+
+      .encoding-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .legend {
+        width: 100%;
+      }
+
+      .legend-item {
+        padding: 0.125rem 0.375rem;
+        font-size: 0.6875rem;
+      }
+
+      .char-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .char-display {
+        width: auto;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: baseline;
+      }
+
+      .char-glyph {
+        font-size: 1.5rem;
+      }
+
+      .char-codepoint {
+        font-size: 0.75rem;
+        margin-top: 0;
+      }
+
+      .char-info {
+        width: 100%;
+      }
+
+      .byte-box {
+        padding: 0.125rem 0.375rem;
+        font-size: 0.6875rem;
+      }
+
+      .byte-details {
+        font-size: 0.6875rem;
+      }
+
+      .copy-btn {
+        opacity: 1;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.5rem;
+      }
+
+      .stat-box {
+        padding: 0.75rem;
+      }
+
+      .stat-value {
+        font-size: 1.5rem;
+      }
+
+      .bar-bg {
+        height: 1.5rem;
+      }
+
+      .info-content {
+        flex-direction: column;
+      }
+
+      .info-icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      .info-list li {
+        font-size: 0.8125rem;
+      }
+
+      .rules-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .rule-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+
+      .rule-desc {
+        margin-left: 0;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .byte-box {
+        padding: 0.125rem 0.25rem;
+        font-size: 0.625rem;
+      }
+    }
+
+    /* Prevent horizontal scroll */
+    html, body {
+      overflow-x: hidden;
+    }
+
+    .container {
+      overflow-x: hidden;
+    }
+  </style>
+</head>
+<body>
+  <!-- Skip link for keyboard navigation -->
+  <a href="#textInput" class="skip-link">Skip to input</a>
+
+  <!-- Screen reader announcements -->
+  <div id="srAnnouncements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>Byte by Byte: UTF Encoding Visualizer</h1>
+      <p>Compare UTF-8 and UTF-16 encoding side by side</p>
+    </div>
+
+    <!-- Input Section -->
+    <div class="card">
+      <label class="input-label" for="textInput">Enter Your Text:</label>
+      <textarea
+        id="textInput"
+        class="text-input"
+        rows="3"
+        placeholder="Type something..."
+        aria-describedby="charLimitWarning"
+      >Hello World! 👋 नमस्ते</textarea>
+
+      <!-- Character limit warning -->
+      <div class="char-limit-warning" id="charLimitWarning" role="alert">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>Showing first <strong>500 characters</strong> of <span id="totalCharCount">0</span> for performance.</span>
+      </div>
+
+      <!-- Example Buttons -->
+      <div class="example-buttons" id="exampleButtons" role="group" aria-label="Example texts"></div>
+    </div>
+
+    <!-- Encoding Rules Section -->
+    <details class="card encoding-rules">
+      <summary class="rules-summary">
+        <span class="rules-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Encoding Rules Reference
+        </span>
+        <span class="rules-toggle">
+          <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+      </summary>
+
+      <div class="rules-content">
+        <div class="rules-grid">
+          <div class="rules-column">
+            <h4 class="rules-column-title">UTF-8 Bit Patterns</h4>
+            <div class="rule-item">
+              <span class="rule-range">U+0000 - U+007F</span>
+              <code class="rule-pattern byte-1-bg">0xxxxxxx</code>
+              <span class="rule-desc">1 byte (ASCII)</span>
+            </div>
+            <div class="rule-item">
+              <span class="rule-range">U+0080 - U+07FF</span>
+              <code class="rule-pattern byte-2-bg">110xxxxx 10xxxxxx</code>
+              <span class="rule-desc">2 bytes</span>
+            </div>
+            <div class="rule-item">
+              <span class="rule-range">U+0800 - U+FFFF</span>
+              <code class="rule-pattern byte-3-bg">1110xxxx 10xxxxxx 10xxxxxx</code>
+              <span class="rule-desc">3 bytes</span>
+            </div>
+            <div class="rule-item">
+              <span class="rule-range">U+10000 - U+10FFFF</span>
+              <code class="rule-pattern byte-4-bg">11110xxx 10xxxxxx 10xxxxxx 10xxxxxx</code>
+              <span class="rule-desc">4 bytes</span>
+            </div>
+          </div>
+
+          <div class="rules-column">
+            <h4 class="rules-column-title">UTF-16 Encoding</h4>
+            <div class="rule-item">
+              <span class="rule-range">U+0000 - U+FFFF</span>
+              <code class="rule-pattern byte-2-purple-bg">Direct code unit</code>
+              <span class="rule-desc">2 bytes (<span class="tooltip" tabindex="0" data-tooltip="Basic Multilingual Plane: Contains most common characters including Latin, Greek, Cyrillic, CJK, and more">BMP<span class="tooltip-indicator">?</span></span>)</span>
+            </div>
+            <div class="rule-item">
+              <span class="rule-range">U+10000 - U+10FFFF</span>
+              <code class="rule-pattern byte-4-purple-bg">High + Low surrogate</code>
+              <span class="rule-desc">4 bytes (<span class="tooltip" tabindex="0" data-tooltip="Two 16-bit code units used together to represent characters outside the BMP, such as emoji and rare scripts">Surrogate<span class="tooltip-indicator">?</span></span>)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <!-- Size Comparison -->
+    <div class="card">
+      <h2 class="section-title">Size Comparison</h2>
+
+      <div class="stats-grid" role="region" aria-label="Encoding statistics">
+        <div class="stat-box" aria-live="polite" aria-atomic="true">
+          <div class="stat-value" id="utf8Total">0</div>
+          <div class="stat-label">UTF-8 Bytes</div>
+        </div>
+
+        <div class="stat-box" aria-live="polite" aria-atomic="true">
+          <div class="stat-value" id="utf16Total">0</div>
+          <div class="stat-label">UTF-16 Bytes</div>
+        </div>
+
+        <div class="stat-box stat-box-highlight" aria-live="polite" aria-atomic="true">
+          <div class="stat-value" id="sizeRatio">0x</div>
+          <div class="stat-label">UTF-16 / UTF-8</div>
+          <div class="ratio-indicator" id="ratioIndicator" role="status"></div>
+        </div>
+      </div>
+
+      <!-- Character Breakdown Stats -->
+      <div class="char-breakdown" aria-live="polite">
+        <h3 class="breakdown-title">Character Breakdown</h3>
+        <div class="breakdown-grid">
+          <div class="breakdown-section">
+            <h4 class="breakdown-subtitle">UTF-8</h4>
+            <div class="breakdown-items" id="utf8Breakdown"></div>
+          </div>
+          <div class="breakdown-section">
+            <h4 class="breakdown-subtitle">UTF-16</h4>
+            <div class="breakdown-items" id="utf16Breakdown"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Bar Comparison -->
+      <div class="bars-container">
+        <div class="bar-section">
+          <div class="bar-header">
+            <span class="bar-label">UTF-8</span>
+            <span class="bar-bytes" id="utf8BytesLabel">0 bytes</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill bar-fill-utf8" id="utf8Bar" style="width: 0%">
+              <span class="bar-percent" id="utf8Percent"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bar-section">
+          <div class="bar-header">
+            <span class="bar-label">UTF-16</span>
+            <span class="bar-bytes" id="utf16BytesLabel">0 bytes</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill bar-fill-utf16" id="utf16Bar" style="width: 0%">
+              <span class="bar-percent" id="utf16Percent"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UTF-8 Encoding -->
+    <div class="card card-utf8">
+      <div class="encoding-header">
+        <h2 class="section-title" style="margin-bottom: 0">UTF-8 Encoding</h2>
+        <div class="legend">
+          <span class="legend-item legend-1byte">1 byte</span>
+          <span class="legend-item legend-2byte">2 bytes</span>
+          <span class="legend-item legend-3byte">3 bytes</span>
+          <span class="legend-item legend-4byte">4 bytes</span>
+        </div>
+      </div>
+
+      <div class="char-list" id="utf8List" role="list" aria-label="UTF-8 encoded characters"></div>
+    </div>
+
+    <!-- UTF-16 Encoding -->
+    <div class="card card-utf16">
+      <div class="encoding-header">
+        <h2 class="section-title" style="margin-bottom: 0">UTF-16 Encoding</h2>
+        <div class="legend">
+          <span class="legend-item legend-2byte">2 bytes (<span class="tooltip" tabindex="0" data-tooltip="Basic Multilingual Plane">BMP</span>)</span>
+          <span class="legend-item legend-4byte">4 bytes (<span class="tooltip" tabindex="0" data-tooltip="Surrogate Pair">Surrogate</span>)</span>
+        </div>
+      </div>
+
+      <div class="char-list" id="utf16List" role="list" aria-label="UTF-16 encoded characters"></div>
+    </div>
+  </div>
+
+  <script>
+    // Constants
+    const MAX_CHARS = 500;
+
+    // Example texts with icons
+    const exampleTexts = [
+      { label: 'ASCII Only', text: 'Hello World!', icon: 'Aa' },
+      { label: 'Mixed Latin', text: 'Café résumé', icon: 'Àé' },
+      { label: 'Hindi', text: 'नमस्ते दुनिया', icon: 'अ' },
+      { label: 'Emoji Heavy', text: '👋🌍💻🚀✨', icon: '😀' },
+      { label: 'Chinese', text: '你好世界', icon: '中' },
+    ];
+
+    // DOM elements
+    const textInput = document.getElementById('textInput');
+    const exampleButtonsContainer = document.getElementById('exampleButtons');
+    const charLimitWarning = document.getElementById('charLimitWarning');
+    const totalCharCountEl = document.getElementById('totalCharCount');
+    const utf8TotalEl = document.getElementById('utf8Total');
+    const utf16TotalEl = document.getElementById('utf16Total');
+    const sizeRatioEl = document.getElementById('sizeRatio');
+    const ratioIndicatorEl = document.getElementById('ratioIndicator');
+    const utf8BytesLabelEl = document.getElementById('utf8BytesLabel');
+    const utf16BytesLabelEl = document.getElementById('utf16BytesLabel');
+    const utf8BarEl = document.getElementById('utf8Bar');
+    const utf16BarEl = document.getElementById('utf16Bar');
+    const utf8PercentEl = document.getElementById('utf8Percent');
+    const utf16PercentEl = document.getElementById('utf16Percent');
+    const utf8ListEl = document.getElementById('utf8List');
+    const utf16ListEl = document.getElementById('utf16List');
+    const utf8BreakdownEl = document.getElementById('utf8Breakdown');
+    const utf16BreakdownEl = document.getElementById('utf16Breakdown');
+    const srAnnouncementsEl = document.getElementById('srAnnouncements');
+
+    // Debounce utility
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Get Unicode code point
+    function getCodePoint(char) {
+      const codePoint = char.codePointAt(0);
+      return 'U+' + codePoint.toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    // Convert string to UTF-8 bytes
+    function getUTF8Bytes(str) {
+      const encoder = new TextEncoder();
+      const result = [];
+
+      for (const char of str) {
+        const charBytes = encoder.encode(char);
+        result.push({
+          char: char,
+          codePoint: getCodePoint(char),
+          bytes: Array.from(charBytes),
+          byteCount: charBytes.length
+        });
+      }
+      return result;
+    }
+
+    // Convert string to UTF-16 bytes
+    function getUTF16Bytes(str) {
+      const result = [];
+      for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        const code = str.charCodeAt(i);
+
+        // Check if it's a surrogate pair (emoji or rare characters)
+        if (code >= 0xD800 && code <= 0xDBFF && i + 1 < str.length) {
+          const nextCode = str.charCodeAt(i + 1);
+          if (nextCode >= 0xDC00 && nextCode <= 0xDFFF) {
+            const fullChar = char + str[i + 1];
+            result.push({
+              char: fullChar,
+              codePoint: getCodePoint(fullChar),
+              bytes: [
+                (code >> 8) & 0xFF,
+                code & 0xFF,
+                (nextCode >> 8) & 0xFF,
+                nextCode & 0xFF
+              ],
+              byteCount: 4
+            });
+            i++;
+            continue;
+          }
+        }
+
+        result.push({
+          char: char,
+          codePoint: getCodePoint(char),
+          bytes: [(code >> 8) & 0xFF, code & 0xFF],
+          byteCount: 2
+        });
+      }
+      return result;
+    }
+
+    // Get total bytes
+    function getTotalBytes(bytes) {
+      return bytes.reduce((sum, item) => sum + item.byteCount, 0);
+    }
+
+    // Get byte color class
+    function getByteColorClass(byteCount) {
+      switch(byteCount) {
+        case 1: return 'byte-1';
+        case 2: return 'byte-2';
+        case 3: return 'byte-3';
+        case 4: return 'byte-4';
+        default: return 'byte-2';
+      }
+    }
+
+    // Create byte box HTML
+    function createByteBox(byte, colorClass, index, total) {
+      const hexValue = byte.toString(16).padStart(2, '0').toUpperCase();
+      return `<span class="byte-box ${colorClass}" role="text">
+        ${hexValue}
+        <span class="sr-only">byte ${index + 1} of ${total}, hex ${hexValue}</span>
+      </span>`;
+    }
+
+    // Create character row HTML
+    function createCharRow(item, encoding) {
+      const colorClass = getByteColorClass(item.byteCount);
+      const byteBoxes = item.bytes.map((b, i) => createByteBox(b, colorClass, i, item.bytes.length)).join('');
+      const binary = item.bytes.map(b => b.toString(2).padStart(8, '0')).join(' ');
+      const hexString = item.bytes.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+      const byteLabel = item.byteCount === 1 ? 'byte' : 'bytes';
+
+      return `
+        <div class="char-row" role="listitem">
+          <div class="char-content">
+            <div class="char-display">
+              <span class="char-glyph">${escapeHtml(item.char)}</span>
+              <span class="char-codepoint">${item.codePoint}</span>
+            </div>
+            <div class="char-info">
+              <div class="byte-boxes-container">
+                <div class="byte-boxes">${byteBoxes}</div>
+                <button class="copy-btn"
+                        data-bytes="${hexString}"
+                        aria-label="Copy byte sequence ${hexString}"
+                        title="Copy bytes">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="byte-details">
+                ${item.byteCount} ${byteLabel} • Binary: ${binary}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Update character breakdown statistics
+    function updateCharBreakdown(utf8Bytes, utf16Bytes) {
+      // Count by byte size for UTF-8
+      const utf8Counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+      utf8Bytes.forEach(item => {
+        utf8Counts[item.byteCount]++;
+      });
+
+      // Count by byte size for UTF-16
+      const utf16Counts = { 2: 0, 4: 0 };
+      utf16Bytes.forEach(item => {
+        utf16Counts[item.byteCount]++;
+      });
+
+      // Render UTF-8 breakdown
+      utf8BreakdownEl.innerHTML = Object.entries(utf8Counts)
+        .filter(([_, count]) => count > 0)
+        .map(([bytes, count]) => `
+          <div class="breakdown-item">
+            <span class="breakdown-dot dot-${bytes}" aria-hidden="true"></span>
+            <span class="breakdown-count">${count}</span>
+            <span class="breakdown-label">char${count !== 1 ? 's' : ''} @ ${bytes}B</span>
+          </div>
+        `).join('') || '<span class="breakdown-label">No characters</span>';
+
+      // Render UTF-16 breakdown
+      utf16BreakdownEl.innerHTML = Object.entries(utf16Counts)
+        .filter(([_, count]) => count > 0)
+        .map(([bytes, count]) => `
+          <div class="breakdown-item">
+            <span class="breakdown-dot dot-${bytes}-purple" aria-hidden="true"></span>
+            <span class="breakdown-count">${count}</span>
+            <span class="breakdown-label">char${count !== 1 ? 's' : ''} @ ${bytes}B</span>
+          </div>
+        `).join('') || '<span class="breakdown-label">No characters</span>';
+    }
+
+    // Announce to screen reader
+    function announceToScreenReader(message) {
+      srAnnouncementsEl.textContent = '';
+      void srAnnouncementsEl.offsetWidth; // Force reflow
+      srAnnouncementsEl.textContent = message;
+    }
+
+    // Update the visualization
+    function updateVisualization() {
+      let text = textInput.value;
+      const chars = [...text];
+      const originalLength = chars.length;
+
+      // Truncate if necessary
+      if (originalLength > MAX_CHARS) {
+        text = chars.slice(0, MAX_CHARS).join('');
+        charLimitWarning.classList.add('visible');
+        totalCharCountEl.textContent = originalLength;
+      } else {
+        charLimitWarning.classList.remove('visible');
+      }
+
+      const utf8Bytes = getUTF8Bytes(text);
+      const utf16Bytes = getUTF16Bytes(text);
+
+      const utf8Total = getTotalBytes(utf8Bytes);
+      const utf16Total = getTotalBytes(utf16Bytes);
+      const ratio = utf8Total > 0 ? (utf16Total / utf8Total).toFixed(2) : 0;
+
+      // Update stats
+      utf8TotalEl.textContent = utf8Total;
+      utf16TotalEl.textContent = utf16Total;
+      sizeRatioEl.textContent = ratio + 'x';
+
+      // Update ratio indicator
+      if (ratio > 1) {
+        ratioIndicatorEl.textContent = 'UTF-16 larger';
+        ratioIndicatorEl.className = 'ratio-indicator ratio-larger';
+      } else if (ratio < 1 && utf8Total > 0) {
+        ratioIndicatorEl.textContent = 'UTF-8 larger';
+        ratioIndicatorEl.className = 'ratio-indicator ratio-smaller';
+      } else if (utf8Total > 0) {
+        ratioIndicatorEl.textContent = 'Same size';
+        ratioIndicatorEl.className = 'ratio-indicator ratio-same';
+      } else {
+        ratioIndicatorEl.textContent = '';
+        ratioIndicatorEl.className = 'ratio-indicator';
+      }
+
+      // Update bar labels
+      utf8BytesLabelEl.textContent = utf8Total + ' bytes';
+      utf16BytesLabelEl.textContent = utf16Total + ' bytes';
+
+      // Update bars
+      const maxBytes = Math.max(utf8Total, utf16Total);
+      const utf8Width = utf8Total > 0 ? (utf8Total / maxBytes) * 100 : 0;
+      const utf16Width = utf16Total > 0 ? (utf16Total / maxBytes) * 100 : 0;
+
+      utf8BarEl.style.width = utf8Width + '%';
+      utf16BarEl.style.width = utf16Width + '%';
+
+      utf8PercentEl.textContent = utf8Total > 0 ? '100%' : '';
+      utf16PercentEl.textContent = utf16Total > 0 ? ((utf16Total / utf8Total) * 100).toFixed(0) + '%' : '';
+
+      // Update character breakdown
+      updateCharBreakdown(utf8Bytes, utf16Bytes);
+
+      // Update character lists
+      utf8ListEl.innerHTML = utf8Bytes.map(item => createCharRow(item, 'utf8')).join('');
+      utf16ListEl.innerHTML = utf16Bytes.map(item => createCharRow(item, 'utf16')).join('');
+
+      // Announce for screen readers (debounced separately)
+      const charCount = chars.length;
+      announceToScreenReader(
+        `Analyzed ${charCount} characters. UTF-8: ${utf8Total} bytes. UTF-16: ${utf16Total} bytes.`
+      );
+    }
+
+    // Debounced update
+    const debouncedUpdate = debounce(updateVisualization, 300);
+
+    // Create example buttons
+    function createExampleButtons() {
+      exampleButtonsContainer.innerHTML = exampleTexts.map(example =>
+        `<button class="example-btn" data-text="${escapeHtml(example.text)}" aria-label="Load example: ${escapeHtml(example.label)}">
+          <span class="example-btn-icon" aria-hidden="true">${example.icon}</span>
+          <span>${escapeHtml(example.label)}</span>
+        </button>`
+      ).join('');
+
+      exampleButtonsContainer.querySelectorAll('.example-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          textInput.value = btn.dataset.text;
+          updateVisualization();
+          textInput.focus();
+        });
+      });
+    }
+
+    // Copy button handler
+    document.addEventListener('click', async (e) => {
+      const copyBtn = e.target.closest('.copy-btn');
+      if (!copyBtn) return;
+
+      const bytes = copyBtn.dataset.bytes;
+
+      try {
+        await navigator.clipboard.writeText(bytes);
+        copyBtn.classList.add('copied');
+        copyBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        `;
+
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          copyBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          `;
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    });
+
+    // Initialize
+    function init() {
+      createExampleButtons();
+      textInput.addEventListener('input', debouncedUpdate);
+      updateVisualization();
+    }
+
+    init();
+  </script>
+</body>
+</html>
